@@ -1,0 +1,54 @@
+Script_praktikum2_sig.sql
+
+Membuat Tabel baru
+
+Tabel jalan
+CREATE TABLE fasilitas_publik (
+    id SERIAL PRIMARY KEY,              
+    nama VARCHAR(100),                  
+    jenis VARCHAR(50),                  
+    alamat VARCHAR(255),                
+    geom GEOMETRY(Point, 4326)          
+);
+
+Tabel Wilayah
+CREATE TABLE wilayah (
+    id SERIAL PRIMARY KEY,
+    nama_wilayah VARCHAR(100),
+    geom GEOMETRY(Polygon, 4326)
+);
+
+Insert data 
+- INSERT Data Jalan (3 Data)
+INSERT INTO jalan (nama_jalan, geom) VALUES
+('Jl. Pramuka (Depan Malahayati)', 
+ ST_SetSRID(ST_GeomFromText('LINESTRING(105.2178 -5.3799, 105.2185 -5.3795, 105.2200 -5.3790)'), 4326)),
+
+('Jl. Menuju RS Bintang Amin', 
+ ST_SetSRID(ST_GeomFromText('LINESTRING(105.2178 -5.3799, 105.2179 -5.3786)'), 4326)),
+
+('Jl. Perumahan Kemiling', 
+ ST_SetSRID(ST_GeomFromText('LINESTRING(105.2144 -5.3778, 105.2155 -5.3787, 105.2160 -5.3790)'), 4326));
+
+- INSERT Data Wilayah (2 Data)
+INSERT INTO wilayah (nama_wilayah, geom) VALUES
+('Area Kampus Malahayati', 
+ ST_SetSRID(ST_GeomFromText('POLYGON((105.2170 -5.3800, 105.2185 -5.3800, 105.2185 -5.3790, 105.2170 -5.3790, 105.2170 -5.3800))'), 4326)),
+
+('Komplek RS Bintang Amin', 
+ ST_SetSRID(ST_GeomFromText('POLYGON((105.2175 -5.3788, 105.2185 -5.3788, 105.2185 -5.3784, 105.2175 -5.3784, 105.2175 -5.3788))'), 4326));
+
+
+Query menampilkan hasil fungsi ST_AsText(), ST_AsGeoJSON(), dan ST_IsValid()
+
+SELECT id, nama_jalan, 
+       ST_AsText(geom) as format_text, 
+       ST_AsGeoJSON(geom) as format_json, 
+       ST_IsValid(geom) as is_valid 
+FROM jalan;
+
+SELECT id, nama_wilayah, 
+       ST_AsText(geom) as format_text, 
+       ST_AsGeoJSON(geom) as format_json, 
+       ST_IsValid(geom) as is_valid 
+FROM wilayah;
