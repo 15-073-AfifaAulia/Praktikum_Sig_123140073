@@ -1,0 +1,36 @@
+1. Yang pertama untuk melihat perbedaan kecepatan yang signifikan antara query tanpa indeks dan dengan indeks, saya membuat tabel berisi 10.000 titik koordinat acak di wilayah Lampung.
+querynya:
+CREATE TABLE data_sensor_besar (
+    id SERIAL PRIMARY KEY,
+    nama_sensor VARCHAR(50),
+    geom GEOMETRY(Point, 4326)
+);
+
+INSERT INTO data_sensor_besar (nama_sensor, geom)
+SELECT 
+    'Sensor-' || i,
+    ST_SetSRID(ST_MakePoint(105.2 + random()*0.1, -5.4 + random()*0.1), 4326)
+FROM generate_series(1, 10000) AS i;
+
+2. Kedua mengidentifikasi query lambat di mana saya menjalankan query untuk mencari sensor dalam radius 1km menggunakan fungsi ST_DWithin. Sebelum ada indeks, PostgreSQL dipaksa melakukan Sequential Scan, yaitu mengecek 10.000 baris satu per satu.
+querynya:
+EXPLAIN ANALYZE
+SELECT * FROM data_sensor_besar 
+WHERE ST_DWithin(geom::geography, ST_MakePoint(105.21, -5.39)::geography, 1000);
+
+
+3. Ketiga optimasi dengan menggunakan GiST (Generalized Search Tree). Indeks ini bekerja dengan konsep Bounding Box atau kotak pembatas, sehingga database tidak perlu menghitung setiap titik secara detail di awal pencarian.
+querynya:
+VACUUM ANALYZE data_sensor_besar;
+dan
+EXPLAIN ANALYZE
+SELECT * FROM data_sensor_besar 
+WHERE ST_DWithin(geom, ST_SetSRID(ST_MakePoint(105.21, -5.39), 4326), 0.009);
+
+4. Hasil speedupnya 98.69%
+
+5. Kesimpulan 
+Indeks GiST sangat krusial untuk data spasial berjumlah besar karena memungkinkan pencarian berbasis "kotak pembatas" yang sangat cepat.
+VACUUM ANALYZE penting digunakan setelah pembuatan indeks agar database memiliki statistik terbaru untuk menentukan jalur pencarian terbaik.
+Efisiensi Query sangat bergantung pada kesesuaian tipe data. Menghindari casting di dalam klausa WHERE memastikan indeks dapat digunakan secara maksimal oleh sistem.
+
