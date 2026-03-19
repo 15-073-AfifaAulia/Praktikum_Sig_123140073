@@ -1,10 +1,8 @@
-1. Yang pertama untuk melihat perbedaan kecepatan yang signifikan antara query tanpa indeks dan dengan indeks, saya membuat tabel berisi 10.000 titik koordinat acak di wilayah Lampung.
+1. Yang pertama untuk melihat perbedaan kecepatan yang signifikan antara query tanpa indeks dan dengan indeks, saya membuat 3 indeks pada 3 tabel berisi 10.000 titik koordinat acak di wilayah Lampung.
 querynya:
-CREATE TABLE data_sensor_besar (
-    id SERIAL PRIMARY KEY,
-    nama_sensor VARCHAR(50),
-    geom GEOMETRY(Point, 4326)
-);
+CREATE INDEX idx_sensor_gist ON sensor_lampung USING GIST(geom);
+CREATE INDEX idx_jalan_gist ON jalan_lampung USING GIST(geom);
+CREATE INDEX idx_wilayah_gist ON wilayah_lampung USING GIST(geom);
 
 INSERT INTO data_sensor_besar (nama_sensor, geom)
 SELECT 
@@ -17,6 +15,7 @@ querynya:
 EXPLAIN ANALYZE
 SELECT * FROM data_sensor_besar 
 WHERE ST_DWithin(geom::geography, ST_MakePoint(105.21, -5.39)::geography, 1000);
+Hasil execution time: 23.264 ms
 
 
 3. Ketiga optimasi dengan menggunakan GiST (Generalized Search Tree). Indeks ini bekerja dengan konsep Bounding Box atau kotak pembatas, sehingga database tidak perlu menghitung setiap titik secara detail di awal pencarian.
@@ -26,8 +25,9 @@ dan
 EXPLAIN ANALYZE
 SELECT * FROM data_sensor_besar 
 WHERE ST_DWithin(geom, ST_SetSRID(ST_MakePoint(105.21, -5.39), 4326), 0.009);
+Hasil Execution time: 0.239 ms
 
-4. Hasil speedupnya 98.69%
+4. Hasil speedupnya 98.97%
 
 5. Kesimpulan 
 Indeks GiST sangat krusial untuk data spasial berjumlah besar karena memungkinkan pencarian berbasis "kotak pembatas" yang sangat cepat.
